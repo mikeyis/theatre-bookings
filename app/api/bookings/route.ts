@@ -7,15 +7,15 @@ export async function GET() {
     return NextResponse.json({ error: 'Database configuration error' }, { status: 500 })
   }
 
-  const connection = await mysql.createConnection(process.env.DATABASE_URL)
-
+  let connection;
   try {
+    connection = await mysql.createConnection(process.env.DATABASE_URL)
     const [rows] = await connection.execute('SELECT * FROM TheatreVenueBooking')
     return NextResponse.json(rows)
   } catch (error) {
     console.error('Database error:', error)
     return NextResponse.json({ error: 'Error fetching bookings' }, { status: 500 })
   } finally {
-    await connection.end()
+    if (connection) await connection.end()
   }
 }
