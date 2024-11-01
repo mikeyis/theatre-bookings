@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { MoreHorizontal, Search } from 'lucide-react'
 
@@ -29,14 +29,31 @@ type Booking = {
   status: string
 }
 
-type TheatreBookingsProps = {
-  initialBookings: Booking[]
-}
+export function TheatreBookings() {
+  const [bookings, setBookings] = useState<Booking[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-export function TheatreBookings({ initialBookings }: TheatreBookingsProps) {
-  const [bookings, setBookings] = useState<Booking[]>(initialBookings)
+  useEffect(() => {
+    fetch('/api/bookings')
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Failed to fetch bookings')
+        }
+        return response.json()
+      })
+      .then(data => {
+        setBookings(data)
+        setIsLoading(false)
+      })
+      .catch(err => {
+        setError('Error fetching bookings')
+        setIsLoading(false)
+      })
+  }, [])
 
   const getStatusColor = (status: string) => {
+    if (!status) return 'bg-gray-500'
     switch (status.toLowerCase()) {
       case 'confirmed':
         return 'bg-green-500'
@@ -49,17 +66,17 @@ export function TheatreBookings({ initialBookings }: TheatreBookingsProps) {
     }
   }
 
+  if (isLoading) return <div>Loading...</div>
+  if (error) return <div>Error: {error}</div>
+
   return (
-    <div className="container mx-auto py-10">
-      <h1 className="text-2xl font-bold mb-5">Theatre Venue Bookings</h1>
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-2 top-1/2 h-4 w-4 -translate-y-1/2 transform text-muted-foreground" />
-          <Input
-            placeholder="Search bookings..."
-            className="pl-8"
-          />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Search className="h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search bookings..." className="w-[300px]" />
         </div>
+        <Button>Add New Booking</Button>
       </div>
       <div className="rounded-md border">
         <Table>
@@ -69,7 +86,7 @@ export function TheatreBookings({ initialBookings }: TheatreBookingsProps) {
               <TableHead>Venue</TableHead>
               <TableHead>Event</TableHead>
               <TableHead>Date</TableHead>
-              <TableHead className="w-[100px]">Actions</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -80,13 +97,13 @@ export function TheatreBookings({ initialBookings }: TheatreBookingsProps) {
                     <div
                       className={`h-2.5 w-2.5 rounded-full ${getStatusColor(booking.status)}`}
                     />
-                    <span className="text-[10px] uppercase text-muted-foreground">{booking.status}</span>
+                    <span className="text-xs uppercase text-muted-foreground">{booking.status || 'Unknown'}</span>
                   </div>
                 </TableCell>
-                <TableCell>{booking.venue_name}</TableCell>
-                <TableCell>{booking.event_name}</TableCell>
-                <TableCell>{format(new Date(booking.booking_date), 'PPP')}</TableCell>
-                <TableCell>
+                <TableCell>{booking.venue_name || 'N/A'}</TableCell>
+                <TableCell>{booking.event_name || 'N/A'}</TableCell>
+                <TableCell>{booking.booking_date ? format(new Date(booking.booking_date), 'PPP') : 'N/A'}</TableCell>
+                <TableCell className="text-right">
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon">
