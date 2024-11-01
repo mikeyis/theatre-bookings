@@ -6,19 +6,6 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=mysql://gslcloudpaneldata:CDpp8xFm9a7SNC41z8jW@db:3306/opportunity
-    depends_on:
-      - db
-
-  db:
-    image: mysql:8.0
-    environment:
-      MYSQL_ROOT_PASSWORD: rootpassword
-      MYSQL_DATABASE: opportunity
-      MYSQL_USER: gslcloudpaneldata
-      MYSQL_PASSWORD: CDpp8xFm9a7SNC41z8jW
-    volumes:
-      - mysql_data:/var/lib/mysql
-
-volumes:
-  mysql_data:
+      - DATABASE_URL=mysql://gslcloudpaneldata:CDpp8xFm9a7SNC41z8jW@host.docker.internal:3306/opportunity
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
