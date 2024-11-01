@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import mysql from 'mysql2/promise'
 
 export async function GET() {
+  if (!process.env.DATABASE_URL) {
+    console.error('DATABASE_URL is not defined')
+    return NextResponse.json({ error: 'Database configuration error' }, { status: 500 })
+  }
+
+  const connection = await mysql.createConnection(process.env.DATABASE_URL)
+
   try {
-    const { rows } = await sql`SELECT * FROM TheatreVenueBooking`
+    const [rows] = await connection.execute('SELECT * FROM TheatreVenueBooking')
     return NextResponse.json(rows)
   } catch (error) {
-    console.error('Database Error:', error)
-    return NextResponse.error()
+    console.error('Database error:', error)
+    return NextResponse.json({ error: 'Error fetching bookings' }, { status: 500 })
+  } finally {
+    await connection.end()
   }
 }
